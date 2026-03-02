@@ -14,8 +14,8 @@ class POLMData:
     def to_text(self) -> str:
         return (
             f"[OBJ] {self.object_type} "
-            f"({self.bbox[0]:.3f}, {self.bbox[1]:.3f}, "
-            f"{self.bbox[2]:.3f}, {self.bbox[3]:.3f}) "
+            f"({self.bbox[0]:.2f}, {self.bbox[1]:.2f}, "
+            f"{self.bbox[2]:.2f}, {self.bbox[3]:.2f}) "
             f"conf={self.confidence:.2f}"
         )
 
