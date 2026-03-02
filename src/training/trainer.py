@@ -13,7 +13,7 @@ class VLMTrainer:
     def __init__(self, config_path: str, checkpoint_path: Optional[str] = None):
         warnings.filterwarnings('ignore', message='.*Unused or unrecognized kwargs.*')
 
-        os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+        os.environ['PYTORCH_ALLOC_CONF'] = 'expandable_segments:True'
         with open(config_path, 'r') as f:
             self.config = yaml.safe_load(f)
         
@@ -143,7 +143,7 @@ class VLMTrainer:
         # Load adapter vào model
         print("Loading adapter weights...")
         self.model = PeftModel.from_pretrained(
-            self.model, 
+            self.model,
             checkpoint_path,
             is_trainable=True  # Quan trọng: cho phép train tiếp
         )
