@@ -21,7 +21,8 @@ class WADDataset(Dataset):
         tokenizer,
         split: str = 'train',
         num_frames: int = 1,
-        image_size: tuple = None
+        image_size: tuple = None,
+        architecture: str = 'qwen'
     ):
         self.metadata = metadata_dataset[split]
         self.frame_index = frame_index
@@ -31,7 +32,7 @@ class WADDataset(Dataset):
         self.split = split
         self.num_frames = num_frames
         self.image_size = image_size
-        
+        self.architecture = architecture
         # Cấu hình Tokenizer để tiết kiệm token
         self.tokenizer.padding_side = "right" # Quan trọng cho training
         self.tokenizer.truncation_side = "right" # Quan trọng cho training
@@ -76,12 +77,15 @@ class WADDataset(Dataset):
                     polm = POLMData(
                         object_type=bbox['label'],
                         bbox=bbox['bbox'],
-                        relative_position = bbox.get('relative_position', "unknown"),
-                        distance_zone = bbox.get('distance_zone', -1.0),
-                        coming_to_user = bbox.get('coming_to_user', False),
-                        speed = bbox.get('speed', 0.0),
+                        confidence=bbox['confidence'],
                     )
                     polm_list.append(polm)
+        
+        polm_list = [p for p in polm_list if p.confidence >= 0.6]
+        
+        polm_list.sort(key=lambda x: x.confidence, reverse=True)
+        
+        polm_list = polm_list[:50]
         
         return polm_list
 
@@ -114,30 +118,26 @@ class WADDataset(Dataset):
             polm_list = self._load_bboxes(frame_path, frame_ids)
             
             # 2. Tạo Text Prompt
-            messages = construct_prompt(polm_list, num_images=self.num_frames, metadata=sample) # Lưu ý: thêm self. nếu hàm nằm trong class, hoặc giữ nguyên nếu là hàm ngoài
-            
+            messages = construct_prompt(
+                polm_list,
+                num_images=self.num_frames, 
+                metadata=sample,
+            )
+            # ---- Qwen path (giữ nguyên hoàn toàn) ----
             prompt_text = self.processor.apply_chat_template(
-                messages,
-                tokenize=False,
-                add_generation_prompt=True
+                messages, tokenize=False, add_generation_prompt=True
             )
-
-            ground_truth_dict = map_metadata_to_ground_truth(sample) # Lưu ý: thêm self. nếu cần
-            answer_text = ground_truth_dict.to_json() + "</answer>" + self.tokenizer.eos_token
-
-            # 3. Xử lý Prompt + Image qua Processor
             inputs = self.processor(
-                text=prompt_text,
-                images=frames,
-                return_tensors="pt",
-                truncation=False,
-                padding=False
+                text=prompt_text, images=frames,
+                return_tensors="pt", truncation=False, padding=False
             )
-            
             prompt_input_ids = inputs['input_ids'].squeeze(0)
             prompt_attention_mask = inputs['attention_mask'].squeeze(0)
             pixel_values = inputs['pixel_values'].squeeze(0)
             
+            ground_truth_dict = map_metadata_to_ground_truth(sample) # Lưu ý: thêm self. nếu cần
+            answer_text = ground_truth_dict.to_json() + "</answer>" + self.tokenizer.eos_token
+
             # 4. Tokenize Answer
             answer_tokens = self.tokenizer(
                 answer_text,
@@ -167,12 +167,12 @@ class WADDataset(Dataset):
                 'pixel_values': pixel_values,
                 'labels': labels
             }
-            
+
             if 'image_sizes' in inputs:
                 return_dict['image_sizes'] = inputs['image_sizes'].squeeze(0)
             if 'image_grid_thw' in inputs:
                 return_dict['image_grid_thw'] = inputs['image_grid_thw'].squeeze(0)
-            
+            # InternVL cần num_patches_list để forward đúng
             return return_dict
             # --- KẾT THÚC LOGIC CŨ ---
 
@@ -211,7 +211,7 @@ def build_dataset(config: Dict, processor, tokenizer):
     print("Loading bboxes...")
     bbox_dataset = load_dataset(
         config['data']['name'],
-        data_files="all_bboxes.jsonl",
+        data_files="all_bboxes_1.jsonl",
         split="train"
     )
     
@@ -223,11 +223,7 @@ def build_dataset(config: Dict, processor, tokenizer):
         bbox_by_folder[folder_id][frame_id].append({
             'label': bbox_entry['label'],
             'confidence': bbox_entry['probs'],
-            'bbox': bbox_entry['boxs'],
-            'relative_position': bbox_entry.get('relative_position', "unknown"),
-            'distance_zone': bbox_entry.get('distance_zone', -1.0),
-            'coming_to_user': bbox_entry.get('coming_to_user', False),
-            'speed': bbox_entry.get('speed', 0.0)
+            'bbox': bbox_entry['boxs']
         })
     
     # Load frame index
@@ -258,7 +254,8 @@ def build_dataset(config: Dict, processor, tokenizer):
         tokenizer=tokenizer,
         split='train',
         num_frames=config['data']['num_frames'],
-        image_size=image_size
+        image_size=image_size,
+        architecture=architecture
     )
     
     # Train/val split

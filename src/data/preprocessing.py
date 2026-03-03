@@ -10,19 +10,12 @@ class POLMData:
     object_type: str
     bbox: List[float]  # [x1, y1, x2, y2]
     confidence: float
-    relative_position: str
-    distance_zone: float
-    coming_to_user: bool
-    speed: float
     def to_text(self) -> str:
         return (
-            f"[OBJ] {self.object_type}, "
-            f"({self.bbox[0]:.2f}, {self.bbox[1]:.2f}, "
-            f"{self.bbox[2]:.2f}, {self.bbox[3]:.2f}), "
-            f"pos={self.relative_position}, "
-            f"dist={self.distance_zone:.2f}, "
-            f"approaching={'yes' if self.coming_to_user else 'no'}, "
-            f"speed={self.speed:.2f}."
+            f"[OBJ] {self.object_type} "
+            f"({self.bbox[0]:.3f}, {self.bbox[1]:.3f}, "
+            f"{self.bbox[2]:.3f}, {self.bbox[3]:.3f}) "
+            f"conf: {self.confidence:.2f}"
         )
 
 @dataclass
@@ -48,6 +41,7 @@ def construct_prompt(
     polm_list: List[POLMData],
     num_images: int = 1,
     metadata: Dict = None,  # ← THÊM
+    model_architecture: str = 'qwen'    
 ) -> List[Dict[str, Any]]:
     """
     Construct model input messages (Updated for apply_chat_template)
@@ -87,25 +81,12 @@ Format response:
 <answer>{"location": "...", "weather": "...", "traffic": "...", "scene": "<concise visual summary, max 2 sentences>", "instruction": "<actionable alert and guidance>"}</answer>
 
 <answer>"""
-    # Tạo list content theo chuẩn OpenAI/HuggingFace
     content = []
-    
-    # 1. Thêm placeholder cho ảnh (QUAN TRỌNG: Để type=image để template tự xử lý \n)
     for _ in range(num_images):
         content.append({"type": "image"})
-        
-    # 2. Thêm text
     content.append({"type": "text", "text": text_content})
-
-    # 3. Đóng gói thành message user
-    messages = [
-        {
-            "role": "user",
-            "content": content
-        }
-    ]
-    return messages   # Trả về List thay vì String
-
+    return [{"role": "user", "content": content}]
+    
 def map_metadata_to_ground_truth(metadata: Dict) -> GroundTruthData:
     """Map WAD metadata to ground truth format"""
     
