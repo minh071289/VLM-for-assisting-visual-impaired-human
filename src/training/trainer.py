@@ -1,10 +1,12 @@
+import os
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+
 from transformers import Trainer, TrainingArguments
 from typing import Dict, Any, Optional
 import yaml
 import torch
 from tqdm.auto import tqdm
 import gc
-import os
 import warnings
 
 class VLMTrainer:
@@ -13,7 +15,6 @@ class VLMTrainer:
     def __init__(self, config_path: str, checkpoint_path: Optional[str] = None):
         warnings.filterwarnings('ignore', message='.*Unused or unrecognized kwargs.*')
 
-        os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
         with open(config_path, 'r') as f:
             self.config = yaml.safe_load(f)
         

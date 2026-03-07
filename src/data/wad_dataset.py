@@ -62,28 +62,28 @@ class WADDataset(Dataset):
                     frames_dict[frame_id] = img
         return [frames_dict[fid] for fid in frame_ids]
 
-    def _load_bboxes(self, frame_path: str, frame_ids: List[int]) -> List[POLMData]:
-        polm_list = []
+    # def _load_bboxes(self, frame_path: str, frame_ids: List[int]) -> List[POLMData]:
+    #     polm_list = []
         
-        if frame_path not in self.bbox_by_folder:
-            return polm_list
+    #     if frame_path not in self.bbox_by_folder:
+    #         return polm_list
         
-        # Load all bboxes
-        for frame_id in frame_ids:
-            if frame_id in self.bbox_by_folder[frame_path]:
-                bboxes = self.bbox_by_folder[frame_path][frame_id]
-                for bbox in bboxes:
-                    polm = POLMData(
-                        object_type=bbox['label'],
-                        bbox=bbox['bbox'],
-                        relative_position = bbox.get('relative_position', "unknown"),
-                        distance_zone = bbox.get('distance_zone', -1.0),
-                        coming_to_user = bbox.get('coming_to_user', False),
-                        speed = bbox.get('speed', 0.0),
-                    )
-                    polm_list.append(polm)
-        
-        return polm_list
+    #     # Load all bboxes
+    #     for frame_id in frame_ids:
+    #         if frame_id in self.bbox_by_folder[frame_path]:
+    #             bboxes = self.bbox_by_folder[frame_path][frame_id]
+    #             for bbox in bboxes:
+    #                 polm = POLMData(
+    #                     object_type=bbox['label'],
+    #                     bbox=bbox['bbox'],
+    #                     relative_position = bbox.get('relative_position', "unknown"),
+    #                     distance_zone = bbox.get('distance_zone', 'unknown'),
+    #                     coming_to_user = bbox.get('coming_to_user', False),
+    #                     speed = bbox.get('speed', 0.0),
+    #                 )
+    #                 polm_list.append(polm)
+    #             polm_list.sort(key=lambda x: x.distance_zone, reverse=True)
+    #     return polm_list[:15]
 
     def _select_frames_safe(self, frame_path: str, num_frames: int = 1) -> List[int]:
         # (Giữ nguyên logic cũ của bạn)
@@ -111,10 +111,10 @@ class WADDataset(Dataset):
             # 1. Load Data
             frame_ids = self._select_frames_safe(frame_path, num_frames=self.num_frames)
             frames = self._load_frames(frame_path, frame_ids)
-            polm_list = self._load_bboxes(frame_path, frame_ids)
+            # polm_list = self._load_bboxes(frame_path, frame_ids)
             
             # 2. Tạo Text Prompt
-            messages = construct_prompt(polm_list, num_images=self.num_frames, metadata=sample) # Lưu ý: thêm self. nếu hàm nằm trong class, hoặc giữ nguyên nếu là hàm ngoài
+            messages = construct_prompt(num_images=self.num_frames, metadata=sample) # Lưu ý: thêm self. nếu hàm nằm trong class, hoặc giữ nguyên nếu là hàm ngoài
             
             prompt_text = self.processor.apply_chat_template(
                 messages,
@@ -138,6 +138,8 @@ class WADDataset(Dataset):
             prompt_attention_mask = inputs['attention_mask'].squeeze(0)
             pixel_values = inputs['pixel_values'].squeeze(0)
             
+            print(f"📏 Prompt length (no answer): {len(prompt_input_ids)} tokens")
+
             # 4. Tokenize Answer
             answer_tokens = self.tokenizer(
                 answer_text,
@@ -225,7 +227,7 @@ def build_dataset(config: Dict, processor, tokenizer):
             'confidence': bbox_entry['probs'],
             'bbox': bbox_entry['boxs'],
             'relative_position': bbox_entry.get('relative_position', "unknown"),
-            'distance_zone': bbox_entry.get('distance_zone', -1.0),
+            'distance_zone': bbox_entry.get('distance_zone', 'unknown'),
             'coming_to_user': bbox_entry.get('coming_to_user', False),
             'speed': bbox_entry.get('speed', 0.0)
         })

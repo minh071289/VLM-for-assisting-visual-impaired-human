@@ -276,6 +276,9 @@ def main():
     print("\nEVALUATION COMPLETED")
     print(f"  Dataset Split: {args.split}")
     print(f"  Result File: {output_path}")
+    print("\n--- Metrics ---")
+    print(f"ROUGE-1: {metrics.get('ROUGE-1', 0):.2f}")
+    print(f"  ROUGE-2: {metrics.get('ROUGE-2', 0):.2f}")
     print(f"  ROUGE-L: {metrics.get('ROUGE-L', 0):.2f}")
     print(f"  TF-IDF:  {metrics.get('TF-IDF', 0):.2f}")
 
