@@ -8,7 +8,7 @@ import numpy as np
 import random
 from sklearn.model_selection import train_test_split
 
-from .preprocessing import POLMData, construct_prompt, map_metadata_to_ground_truth
+from .preprocessing import construct_prompt, map_metadata_to_ground_truth
 from PIL import UnidentifiedImageError
 
 class WADDataset(Dataset):
