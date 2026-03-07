@@ -122,6 +122,8 @@ class WADDataset(Dataset):
                 add_generation_prompt=True
             )
 
+            print(f"📏 Prompt length (before tokenization): {len(prompt_text)} characters")
+
             ground_truth_dict = map_metadata_to_ground_truth(sample) # Lưu ý: thêm self. nếu cần
             answer_text = ground_truth_dict.to_json() + "</answer>" + self.tokenizer.eos_token
 
@@ -138,6 +140,8 @@ class WADDataset(Dataset):
             prompt_attention_mask = inputs['attention_mask'].squeeze(0)
             pixel_values = inputs['pixel_values'].squeeze(0)
             
+            print(f"📏 Prompt length (no answer): {len(prompt_input_ids)} tokens")
+
             # 4. Tokenize Answer
             answer_tokens = self.tokenizer(
                 answer_text,
