@@ -79,7 +79,6 @@ class WADDataset(Dataset):
                         relative_position = bbox.get('relative_position', "unknown"),
                         distance_zone = bbox.get('distance_zone', 'unknown'),
                         coming_to_user = bbox.get('coming_to_user', False),
-                        speed = bbox.get('speed', 0.0),
                     )
                     polm_list.append(polm)
                 polm_list.sort(key=lambda x: x.distance_zone, reverse=True)
