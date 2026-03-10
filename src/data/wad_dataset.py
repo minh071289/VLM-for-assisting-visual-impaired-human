@@ -83,7 +83,7 @@ class WADDataset(Dataset):
                     )
                     polm_list.append(polm)
                 polm_list.sort(key=lambda x: x.distance_zone, reverse=True)
-        return polm_list[:15]
+        return polm_list[:10]
 
     def _select_frames_safe(self, frame_path: str, num_frames: int = 1) -> List[int]:
         # (Giữ nguyên logic cũ của bạn)
