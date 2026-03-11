@@ -11,14 +11,17 @@ class POLMData:
     relative_position: str
     distance_zone: str
     coming_to_user: bool
-    speed: float
+    speed: str
+    size: int
+    danger_score: float # ← THÊM thuộc tính mới
     def to_text(self) -> str:
         return (
             f"[OBJ]: {self.object_type}, "
+            f"size: {self.size}, "
             f"pos: {self.relative_position}, "
             f"dist: {self.distance_zone}, "
             f"approaching: {'yes' if self.coming_to_user else 'no'}, "
-            f"speed: {self.speed:.2f}."
+            f"speed: {self.speed}."
         )
 
 @dataclass
