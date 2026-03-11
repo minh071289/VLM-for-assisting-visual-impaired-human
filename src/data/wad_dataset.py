@@ -140,8 +140,6 @@ class WADDataset(Dataset):
             prompt_attention_mask = inputs['attention_mask'].squeeze(0)
             pixel_values = inputs['pixel_values'].squeeze(0)
             
-            print(f"Sample {idx}: prompt length={len(prompt_input_ids)}, pixel_values shape={pixel_values.shape}")
-
             # 4. Tokenize Answer
             answer_tokens = self.tokenizer(
                 answer_text,
