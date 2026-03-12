@@ -21,7 +21,7 @@ class WADDataset(Dataset):
         processor,
         tokenizer,
         split: str = 'train',
-        num_frames: int = 1,
+        num_frames: int = 3,
         image_size: tuple = None
     ):
         self.metadata = metadata_dataset[split]
