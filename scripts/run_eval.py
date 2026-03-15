@@ -77,11 +77,11 @@ def prepare_auxiliary_data(config):
     # 2. Load bboxes
     print("Loading bboxes...")
     # Load từ file local nếu có, hoặc từ HF hub theo config
-    bbox_file = "all_bboxes.jsonl"
+    bbox_file = "all_bboxes_1.jsonl"
     if os.path.exists(bbox_file):
         bbox_dataset = load_dataset("json", data_files=bbox_file, split="train")
     else:
-        bbox_dataset = load_dataset(config['data']['name'], data_files="all_bboxes.jsonl", split="train")
+        bbox_dataset = load_dataset(config['data']['name'], data_files="all_bboxes_1.jsonl", split="train")
 
     bbox_by_folder = defaultdict(lambda: defaultdict(list))
     for bbox_entry in bbox_dataset:
